@@ -71,7 +71,7 @@
             background: #f1f5f9;
         }
 
-        .btn-primary {
+        .analyze-email-text-btn {
             background: #2563eb;
             color: white;
             border: none;
@@ -82,7 +82,22 @@
             transition: 0.2s;
         }
 
-        .btn-primary:hover {
+        .analyze-file-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            font-weight: 600;
+            width: 100%;
+            transition: 0.2s;
+        }
+
+        .analyze-email-text-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .analyze-file-btn:hover {
             background: #1d4ed8;
         }
 
@@ -135,14 +150,18 @@
                 <button class="tab-btn" data-tab="file">File Upload</button>
             </div>
 
-            <div id="tab-text" class="tab-content">
+            <div class="tab-content" id="tab-text">
                 <textarea
                     class="w-full border rounded-md p-3 h-44 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Paste your email content here..."></textarea>
-                <button class="btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Analyze Email</button>
+                    placeholder="Paste your email content here..."
+                    id="textarea"
+                ></textarea>
+                <button class="analyze-email-text-btn">
+                    <i class="fa-solid fa-magnifying-glass"></i> Analyze Text
+                </button>
             </div>
 
-            <div id="tab-file" class="tab-content hidden">
+            <div class="tab-content hidden" id="tab-file">
                 <div class="dropzone mb-4">
                     <i class="fa-solid fa-upload fa-2x mb-2"></i>
                     <p>Drag and drop or click to select</p>
@@ -156,7 +175,7 @@
                     <p id="fileName" class="text-xs text-gray-400 mt-2">No file selected</p>
                 </div>
 
-                <button class="btn-primary">
+                <button class="analyze-file-btn">
                     <i class="fa-solid fa-magnifying-glass"></i> Analyze File
                 </button>
             </div>
@@ -191,54 +210,54 @@
     </div>
 
     <script>
-        const analyzeTextBtn = document.querySelector("#tab-text .btn-primary");
-        const analyzeFileBtn = document.querySelector("#tab-file .btn-primary");
-        const textarea = document.querySelector("#tab-text textarea");
 
-        const analyzeResponse = document.getElementById("analyze-response");
-        const defaultClassificationSection = document.querySelector("#default-classification-section");
+        const analyzeTextBtn = document.querySelector(".analyze-email-text-btn")
+        const analyzeFileBtn = document.querySelector(".analyze-file-btn")
+        const textarea = document.querySelector("#textarea")
+        const analyzeResponse = document.querySelector("#analyze-response")
+        const defaultClassificationSection = document.querySelector("#default-classification-section")
 
-        const API_URL = "http://localhost:3000"
+        // const API_URL = "http://localhost:3000"
+        const API_URL = "https://email-classifier-ia.onrender.com"
 
         // Tabs
-        const tabButtons = document.querySelectorAll(".tab-btn");
-        const tabContents = document.querySelectorAll(".tab-content");
+        const tabButtons = document.querySelectorAll(".tab-btn")
+        const tabContents = document.querySelectorAll(".tab-content")
 
         tabButtons.forEach(btn => {
             btn.addEventListener("click", () => {
-                // remover 'active' de todos os botões
-                tabButtons.forEach(b => b.classList.remove("active"));
+                // remove 'active'
+                tabButtons.forEach(b => b.classList.remove("active"))
 
-                // adicionar 'active' ao clicado
-                btn.classList.add("active");
+                // add 'active' on clicked tab
+                btn.classList.add("active")
 
-                // esconder todos os conteúdos
-                tabContents.forEach(content => content.classList.add("hidden"));
+                // hidde all contents
+                tabContents.forEach(content => content.classList.add("hidden"))
 
-                // mostrar apenas o conteúdo do botão clicado
-                const tabId = btn.getAttribute("data-tab");
-                document.getElementById(`tab-${tabId}`).classList.remove("hidden");
-            });
-        });
+                // show content
+                const tabId = btn.getAttribute("data-tab")
+                document.getElementById(`tab-${tabId}`).classList.remove("hidden")
+            })
+        })
 
-
-        // Enviar texto
+        // Send Text
         analyzeTextBtn.addEventListener("click", async () => {
 
-            const content = textarea.value.trim();
+            const content = textarea.value.trim()
 
             if (!content)
-                return alert("Digite ou cole o texto do e-mail!");
+                return alert("Digite ou cole o texto do e-mail!")
 
             const res = await fetch(`${API_URL}/analyze-text`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ content })
-            });
+            })
 
-            const data = await res.json();
-            showResult(data);
-        });
+            const data = await res.json()
+            showResult(data)
+        })
 
         // Send File
         analyzeFileBtn.addEventListener("click", async () => {
@@ -248,42 +267,54 @@
 
             const formData = new FormData();
             formData.append("file", fileInput.files[0])
-      
 
-            const fakeData = {
-                "category": "produtivo",
-                "suggestedResponse": "Prezados Rômulo e Mojo,\n\nConfirmo o recebimento do contrato de locação devidamente elaborado. Agradeço pelo profissionalismo na formalização do documento.\n\nAs condições estabelecidas estão claras e aceitáveis para ambas as partes. Fico à disposição para quaisquer esclarecimentos adicionais que sejam necessários.\n\nAguardemos o início da vigência contratual em 14/08/2025.\n\nAtenciosamente,\n[Seu Nome]",
-                "emailSummary": "O objetivo principal do remetente é formalizar um contrato de locação residencial entre Rômulo (locador) e Mojo (locatário) para o imóvel localizado na Ladeira Felipe Neri, 19, no Rio de Janeiro, estabelecendo os direitos, deveres e condições do aluguel por prazo indeterminado."
+            try {
+                const fileResponse = await fetch(`${API_URL}/analyze-file`, {
+                    method: "POST",
+                    body: formData
+                })
+
+                if (!fileResponse.ok)
+                    throw new Error("Erro ao analisar arquivo")
+
+                const data = await fileResponse.json()
+                showResult(data)
+
+            } catch (error) {
+                console.error(error)
+                alert("Erro ao enviar arquivo para análise!")
             }
-
-            showResult(fakeData)
+            
+            // const fakeData = {
+            //     "category": "produtivo",
+            //     "suggestedResponse": "Prezados Rômulo e Mojo,\n\nConfirmo o recebimento do contrato...",
+            //     "emailSummary": "O objetivo principal do remetente é formalizar um contrato..."
+            // }
+            // showResult(fakeData)
+            
         })
 
-        const fileInput = document.getElementById("fileInput");
-        const chooseFileBtn = document.getElementById("chooseFileBtn");
-        const fileName = document.getElementById("fileName");
+        const fileInput = document.querySelector("#fileInput")
+        const chooseFileBtn = document.querySelector("#chooseFileBtn")
+        const fileName = document.querySelector("#fileName")
 
-        // Quando clicar no botão, abre o explorer
-        chooseFileBtn.addEventListener("click", () => {
-            fileInput.click();
-        });
+        // Open explorer file
+        chooseFileBtn.addEventListener("click", () => fileInput.click())
 
-        // Quando um arquivo for selecionado, mostra o nome
+        // Show selected file name
         fileInput.addEventListener("change", () => {
             if (fileInput.files.length > 0) {
-                fileName.textContent = `📄 ${fileInput.files[0].name}`;
-                fileName.classList.remove("text-gray-400");
-                fileName.classList.add("text-green-600", "font-medium");
+                fileName.textContent = `📄 ${fileInput.files[0].name}`
+                fileName.classList.remove("text-gray-400")
+                fileName.classList.add("text-green-600", "font-medium")
             } else {
-                fileName.textContent = "No file selected";
-                fileName.classList.remove("text-green-600", "font-medium");
-                fileName.classList.add("text-gray-400");
+                fileName.textContent = "No file selected"
+                fileName.classList.remove("text-green-600", "font-medium")
+                fileName.classList.add("text-gray-400")
             }
-        });
+        })
 
-
-        // Results
-        function showResult(data) {
+        const showResult = (data) => {
 
             analyzeResponse.classList.remove("hidden")
             defaultClassificationSection.classList.add("hidden")
@@ -298,10 +329,10 @@
             else
                 emailClassification.classList.add("bg-red-400/10", "text-red-500")
 
-            const suggestedResponse = document.getElementById("suggested-response")
+            const suggestedResponse = document.querySelector("#suggested-response")
             suggestedResponse.textContent = data.suggestedResponse
 
-            const emailSummary = document.getElementById("email-summary")
+            const emailSummary = document.querySelector("#email-summary")
             emailSummary.textContent = data.emailSummary
         }
     </script>
